@@ -1,0 +1,25 @@
+{
+  "name": "doodsfileprocessor",
+  "version": "1.0.0",
+  "description": "Analyse folder and process image files using doods.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/depuits/doodsFileProcessor.git"
+  },
+  "author": "depuits",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/depuits/doodsFileProcessor/issues"
+  },
+  "homepage": "https://github.com/depuits/doodsFileProcessor#readme",
+  "dependencies": {
+    "canvas": "^2.6.1",
+    "chokidar": "^3.4.2",
+    "config": "^3.3.2",
+    "node-fetch": "^2.6.1"
+  }
+}

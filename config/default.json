@@ -1,0 +1,7 @@
+{
+	"canvasSize": 720,
+	"watchDir": "C:\\tmp\\doods\\*.jpg",
+	"doods": {
+		"url": "http://cctv:8080/detect"
+	}
+}
