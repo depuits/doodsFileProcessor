@@ -103,7 +103,7 @@ async function ProcessImage(filePath) {
 
 	// perform the actions
 	for (let i = 0; i < actions.length; ++i) {
-		require(path.join('actions', actions[i].module)).process(actions[i].options, filePath, savePath, detections);
+		require('./' + path.join('actions', `${actions[i].module}.js`)).process(actions[i].options, filePath, savePath, detections);
 	}
 }
 
