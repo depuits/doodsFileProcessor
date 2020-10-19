@@ -1,7 +1,27 @@
 {
-	"canvasSize": 720,
 	"watchDir": "C:\\tmp\\doods\\*.jpg",
 	"doods": {
-		"url": "http://cctv:8080/detect"
+		"url": "http://cctv:8080/detect",
+		"detectorName": "default",
+		"detect": {
+			"*": 50
+		}
+	},
+	"mask": [
+		[0.0, 0.0],
+		[0.0, 0.2],
+		[0.5, 0.0]
+	],
+	"output": {
+		"drawMask": false
+	},
+	"actions": {
+		"result": [],
+		"empty": [
+			{
+				"module": "delete",
+				"options": {}
+			}
+		]
 	}
 }
