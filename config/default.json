@@ -11,16 +11,29 @@
 		{ "x": 0.0, "y": 0.0, "start": true},
 		{ "x": 0.0, "y": 0.4},
 		{ "x": 0.65, "y": 0.0},
-		{ "x": 0.5, "y": 0.5, "start": true},
-		{ "x": 0.5, "y": 0.6},
-		{ "x": 0.6, "y": 0.6},
-		{ "x": 0.6, "y": 0.5}
+		{ "x": 0.38, "y": 0.4, "start": true},
+		{ "x": 0.38, "y": 0.55},
+		{ "x": 0.45, "y": 0.55},
+		{ "x": 0.45, "y": 0.4}
 	],
 	"output": {
 		"drawMask": true
 	},
 	"actions": {
-		"result": [],
+		"result": [
+			{
+				"module": "mqtt",
+				"options": {
+					"topic": "home/garage",
+					"connection": {
+						"host": "{MQTT-SERVER}",
+						"port": 1883, // Usually 1883
+						"username": "{MQTT-USERNAME}",
+						"password": "{MQTT-PASSWORD}",
+					}
+				}
+			}
+		],
 		"empty": [
 			{
 				"module": "delete",

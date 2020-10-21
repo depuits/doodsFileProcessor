@@ -7,5 +7,6 @@ newPath: path of the image file with detections (undefined if no detections wher
 detections: objects detected on the image (undefined if no detections where found)
 */
 exports.process = async function(options, oldPath, newPath, detections) {
+	console.log('removing image:', oldPath);
 	await fs.unlink(oldPath);
 };
