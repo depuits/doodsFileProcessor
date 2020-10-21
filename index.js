@@ -5,39 +5,66 @@ const chokidar = require('chokidar');
 const { createCanvas, loadImage } = require('canvas');
 const config = require('config');
 
-async function ProcessImage(filePath) {
-	console.log('New image found: ', filePath);
-	const img = await loadImage(filePath);
-	console.log('Image loaded');
+function sleep(ms) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+};
 
-	let canvasWidth = img.width;
-	const aspect = img.height / img.width;
-
-	if (config.has('canvasSize')) {
-		canvasWidth = config.get('canvasSize');
+// when the image file is not completly written to the disk the loadImage might
+// fail because incomplete data. When this happens we wait a bit and then retry
+async function forceLoadImage(filePath) {
+	while (true) {
+		try {
+			return await loadImage(filePath);
+		} catch(err) {
+			console.log('File not ready:', filePath);
+			await sleep(500);
+		}
 	}
+}
 
-	const canvas = createCanvas(canvasWidth, canvasWidth * aspect);
-	const ctx = canvas.getContext("2d");
-	ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-	const mask = config.get('mask');
+function drawMask(canvas, ctx, mask) {
 	// a mask path must have at least 3 point before it's usefull
 	if (mask.length >= 3) {
 		ctx.fillStyle = '#000'; // fill the mask with black
 		ctx.beginPath();
 
 		// set the startin point
-		ctx.moveTo(mask[0][0] * canvas.width, mask[0][1] * canvas.height);
 
 		// draw the rest of the shape
-		for (let i = 1; i < mask.length; ++i) {
-			ctx.lineTo(mask[i][0] * canvas.width, mask[i][1] * canvas.height);
+		for (let i = 0; i < mask.length; ++i) {
+			if (i == 0 || mask[i].start) {
+				ctx.moveTo(mask[i].x * canvas.width, mask[i].y * canvas.height);
+			} else {
+				ctx.lineTo(mask[i].x * canvas.width, mask[i].y * canvas.height);
+			}
 		}
 
 		ctx.closePath();
 		ctx.fill();
 	}
+}
+function drawDetections(canvas, ctx, detections) {	
+	for (let i = 0; i < detections.length; ++i) {
+		let det = detections[i];
+
+		let x = canvas.width * det.left;
+		let y = canvas.height * det.top;
+
+		let w = canvas.width * (det.right - det.left);
+		let h = canvas.height * (det.bottom - det.top);
+
+		ctx.lineWidth = 3;
+		ctx.strokeStyle = "red";
+		ctx.fillStyle = "red";
+		ctx.font = "24px Verdana";
+		ctx.strokeRect(x, y, w, h); 
+		ctx.fillText(`${det.label} (${det.confidence})`, x + 5, y + 30);
+	}
+}
+
+async function sendCanvasToServer(canvas) {
 
 	const dataUrl = canvas.toDataURL();
 	const metaIndex = dataUrl.indexOf(',');
@@ -55,12 +82,30 @@ async function ProcessImage(filePath) {
 		body: JSON.stringify(requestData)
 	});
 
-	// redraw image if the mask should not be drawn on final image
-	if (!config.get('output.drawMask')) {
-		ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+	return await result.json();
+}
+
+async function processImage(filePath) {
+	console.log('New image found: ', filePath);
+
+	const img = await forceLoadImage(filePath);
+	console.log('Image loaded');
+
+	let canvasWidth = img.width;
+	const aspect = img.height / img.width;
+
+	if (config.has('canvasSize')) {
+		canvasWidth = config.get('canvasSize');
 	}
 
-	const data = await result.json();
+	const canvas = createCanvas(canvasWidth, canvasWidth * aspect);
+	const ctx = canvas.getContext("2d");
+	ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+	const mask = config.get('mask');
+	drawMask(canvas, ctx, mask);
+
+	const data = await sendCanvasToServer(canvas);
 	let actions, detections, savePath;
 
 	if (data.detections) {
@@ -74,22 +119,12 @@ async function ProcessImage(filePath) {
 			savePath = path.join(config.get('output.path'), path.basename(filePath));
 		}
 
-		for (let i = 0; i < detections.length; ++i) {
-			let det = detections[i];
-
-			let x = canvas.width * det.left;
-			let y = canvas.height * det.top;
-
-			let w = canvas.width * (det.right - det.left);
-			let h = canvas.height * (det.bottom - det.top);
-
-			ctx.lineWidth = 3;
-			ctx.strokeStyle = "red";
-			ctx.fillStyle = "red";
-			ctx.font = "24px Verdana";
-			ctx.strokeRect(x, y, w, h); 
-			ctx.fillText(`${det.label} (${det.confidence})`, x + 5, y + 30);
+		// redraw image if the mask should not be drawn on final image
+		if (!config.get('output.drawMask')) {
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 		}
+
+		drawDetections(canvas, ctx, detections);
 
 		// save and alert if objects where detected
 		const buffer = canvas.toBuffer('image/jpeg');
@@ -107,19 +142,19 @@ async function ProcessImage(filePath) {
 	}
 }
 
-function OnError(error) {
+function onError(error) {
 	console.error('Error happened: ', error);
 }
 
-function OnFileAdded(filePath) {
-	ProcessImage(filePath).catch(OnError);
+function onFileAdded(filePath) {
+	processImage(filePath).catch(onError);
 }
 
 const watchDir = config.get('watchDir');
 const watcher = chokidar.watch(watchDir, { ignored: /^\./, persistent: true, ignoreInitial: true });
 
 watcher
-	.on('add', OnFileAdded)
-	.on('error', OnError);
+	.on('add', onFileAdded)
+	.on('error', onError);
 
 console.log('Started watching files:', watchDir);
