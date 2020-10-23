@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const chokidar = require('chokidar');
 const { createCanvas, loadImage } = require('canvas');
 const config = require('config');
+const btoa = require('btoa');
 
 function sleep(ms) {
 	return new Promise((resolve) => {
@@ -64,16 +65,23 @@ function drawDetections(canvas, ctx, detections) {
 	}
 }
 
+function canvasToBase64(canvas) {
+	const buffer = canvas.toBuffer('image/jpeg');
+	var binary = '';
+	var bytes = new Uint8Array(buffer);
+	var len = bytes.byteLength;
+	for (var i = 0; i < len; i++) {
+		binary += String.fromCharCode(bytes[i]);
+	}
+
+	return btoa(binary);
+}
+
 async function sendCanvasToServer(canvas) {
-
-	const dataUrl = canvas.toDataURL();
-	const metaIndex = dataUrl.indexOf(',');
-	const base64 = dataUrl.substring(metaIndex + 1);
-
 	const requestData = {
 		detector_name: config.get('doods.detectorName'),
 		detect: config.get('doods.detect'),
-		data: base64,
+		data: canvasToBase64(canvas),
 	};
 
 	console.log('Sending image to server');

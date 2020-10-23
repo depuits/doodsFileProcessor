@@ -18,6 +18,7 @@
   "homepage": "https://github.com/depuits/doodsFileProcessor#readme",
   "dependencies": {
     "async-mqtt": "^2.6.1",
+    "btoa": "^1.2.1",
     "canvas": "^2.6.1",
     "chokidar": "^3.4.2",
     "config": "^3.3.2",
