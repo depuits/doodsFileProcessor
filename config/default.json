@@ -24,7 +24,7 @@
 			{
 				"module": "mqtt",
 				"options": {
-					"topic": "home/garage",
+					"topic": "cctv/detect",
 					"connection": {
 						"host": "{MQTT-SERVER}",
 						"port": 1883, // Usually 1883
