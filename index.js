@@ -6,6 +6,21 @@ const { createCanvas, loadImage } = require('canvas');
 const config = require('config');
 const btoa = require('btoa');
 
+const actionModules = {};
+
+preloadActions(config.get('actions.result'));
+preloadActions(config.get('actions.empty'));
+
+function preloadActions(actions) {
+	for (let i = 0; i < actions.length; ++i) {
+		let mod = actions[i].module;
+		if (!actionModules[mod]) {
+			// load module if its not already loaded
+			actionModules[mod] = require('./' + path.join('actions', `${mod}.js`));
+		}
+	}
+}
+
 function sleep(ms) {
 	return new Promise((resolve) => {
 		setTimeout(resolve, ms);
@@ -146,7 +161,7 @@ async function processImage(filePath) {
 
 	// perform the actions
 	for (let i = 0; i < actions.length; ++i) {
-		require('./' + path.join('actions', `${actions[i].module}.js`)).process(actions[i].options, filePath, savePath, detections);
+		actionModules[actions[i].module].process(actions[i].options, filePath, savePath, detections);
 	}
 }
 
